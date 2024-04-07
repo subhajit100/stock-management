@@ -3,12 +3,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import SearchedProducts from "./SearchedProducts";
 import Spinner from "./Spinner";
+import { useAlert } from "react-alert";
+import { useRouter } from "next/navigation";
 
 const Search = ({ products, setProducts }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchProducts, setSearchProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const alert = useAlert();
+  const router = useRouter();
 
   let timeoutId = useRef(null);
   // this searchRef actually required to select the div which encloses input search element and the search suggestion div also. In this way whenever we click out of this section, then only searchresults disappear. Before this, only on clicking + and - of searchResults, the results were disappearing.
@@ -54,10 +58,19 @@ const Search = ({ products, setProducts }) => {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        "auth-token": localStorage.getItem("auth-token"),
       },
       body: JSON.stringify({ name, price, quantity }),
     });
     const data = await res.json();
+
+    // check if data message has anything related to unauthorized access, then redirect to login
+    if (data.message === "Please authenticate with correct credentials") {
+      alert.error(data.message);
+      localStorage.removeItem("auth-token");
+      router.replace("/login");
+      return;
+    }
 
     // set in the frontend also
     const updatedSearchProducts = searchProducts.map((searchProduct) => {
@@ -85,15 +98,24 @@ const Search = ({ products, setProducts }) => {
     let { name, price, quantity } = product;
     quantity += 1;
     setIsLoading(true);
-    // write the logic to decrease the quantity on the backend with id
+    // write the logic to increase the quantity on the backend with id
     const res = await fetch(`/api/products/${product._id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        "auth-token": localStorage.getItem("auth-token"),
       },
       body: JSON.stringify({ name, price, quantity }),
     });
     const data = await res.json();
+
+    // check if data message has anything related to unauthorized access, then redirect to login
+    if (data.message === "Please authenticate with correct credentials") {
+      alert.error(data.message);
+      localStorage.removeItem("auth-token");
+      router.replace("/login");
+      return;
+    }
 
     // set in the frontend also
     const updatedSearchProducts = searchProducts.map((searchProduct) => {

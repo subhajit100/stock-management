@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Spinner from "./Spinner";
 import { useAlert } from "react-alert";
+import { useRouter } from "next/navigation";
 
 const AddProductForm = ({ products, setProducts }) => {
   const [name, setName] = useState("");
@@ -9,6 +10,7 @@ const AddProductForm = ({ products, setProducts }) => {
   const [quantity, setQuantity] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const alert = useAlert();
+  const router = useRouter();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -28,6 +30,7 @@ const AddProductForm = ({ products, setProducts }) => {
 
       headers: {
         "Content-Type": "application/json",
+        "auth-token": localStorage.getItem("auth-token"),
       },
       body: JSON.stringify({ name, price, quantity }),
     });
@@ -36,7 +39,16 @@ const AddProductForm = ({ products, setProducts }) => {
       setProducts((products) => [...products, data.product]);
       alert.success("Product added successfully");
     } else {
-      alert.error("Adding product unsuccessful");
+      setIsLoading(false);
+      if (data.message === "Please authenticate with correct credentials") {
+        alert.error(data.message);
+        localStorage.removeItem("auth-token");
+        router.replace("/login");
+      } else {
+        alert.error("Adding product unsuccessful");
+      }
+
+      return;
     }
 
     // Reset form fields after adding

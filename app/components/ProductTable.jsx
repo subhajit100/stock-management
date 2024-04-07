@@ -4,11 +4,13 @@ import EditProductModal from "./EditProductModal";
 import ProductRow from "./ProductRow";
 import Spinner from "./Spinner";
 import { useAlert } from "react-alert";
+import { useRouter } from "next/navigation";
 
 const ProductTable = ({ products, setProducts }) => {
   const [editProductId, setEditProductId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const alert = useAlert();
+  const router = useRouter();
 
   const handleDeleteClick = async (id, productName) => {
     let consent = confirm(
@@ -22,6 +24,7 @@ const ProductTable = ({ products, setProducts }) => {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
+        "auth-token": localStorage.getItem("auth-token"),
       },
     });
     const data = await res.json();
@@ -32,7 +35,13 @@ const ProductTable = ({ products, setProducts }) => {
       setProducts(newProducts);
       alert.success("Product deleted successfully");
     } else {
-      alert.error("Deleting product unsuccessful");
+      if (data.message === "Please authenticate with correct credentials") {
+        alert.error(data.message);
+        localStorage.removeItem("auth-token");
+        router.replace("/login");
+      } else {
+        alert.error("Deleting product unsuccessful");
+      }
     }
     setIsLoading(false);
   };
@@ -54,6 +63,7 @@ const ProductTable = ({ products, setProducts }) => {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
+        "auth-token": localStorage.getItem("auth-token"),
       },
       body: JSON.stringify({ name, price, quantity }),
     });
@@ -71,7 +81,13 @@ const ProductTable = ({ products, setProducts }) => {
       setProducts(updatedProducts);
       alert.success("Product updated successfully");
     } else {
-      alert.error("Updating product unsuccessful");
+      if (data.message === "Please authenticate with correct credentials") {
+        alert.error(data.message);
+        localStorage.removeItem("auth-token");
+        router.replace("/login");
+      } else {
+        alert.error("Updating product unsuccessful");
+      }
     }
     setIsLoading(false);
   };
