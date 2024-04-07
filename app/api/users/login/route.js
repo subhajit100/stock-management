@@ -37,7 +37,7 @@ export async function POST(request) {
     // if user exists and password correct, then create an auth token using jwt and return a response by adding that jwt token inside headers
     const data = { user: { id: user[0]._id } };
     // TODO:- make the JWT to only last for 1 hour
-    const authToken = jwt.sign(data, process.env.JWT_KEY, { expiresIn: "30000" });
+    const authToken = jwt.sign(data, process.env.JWT_KEY, { expiresIn: "5h" });
 
     const response = NextResponse.json(
       {
